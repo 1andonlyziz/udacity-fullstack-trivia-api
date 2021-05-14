@@ -73,11 +73,11 @@ class TriviaTestCase(unittest.TestCase):
 
     def test_insert_question(self):
         question_dict = {
-            "answer": "Simple Answer",
-            "category": 5,
-            "difficulty": 4,
-            "id": 99,
-            "question": "Simple Question"
+            "answer": "Tested Answer",
+            "category": 3,
+            "difficulty": 1,
+            "id": 22,
+            "question": "Tested Question"
         }
 
         # send post request to create a questions

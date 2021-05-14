@@ -50,7 +50,7 @@ def create_app(test_config=None):
         return jsonify({
             'success': True,
             'categories': formatted_categories
-        })
+        }), 200
 
     @app.route('/questions', methods=['GET'])
     def get_questions():
@@ -71,7 +71,7 @@ def create_app(test_config=None):
             'questions': current_questions,
             'total_questions': len(Question.query.all()),
             'categories': {category.id: category.type for category in categories}
-        })
+        }), 200
 
     @app.route('/questions/<int:id>', methods=['DELETE'])
     def delete_question(id):
@@ -90,7 +90,7 @@ def create_app(test_config=None):
             return jsonify({
                 'success': True,
                 'deleted': id
-            })
+            }), 200
 
         except:
             abort(422)
@@ -121,7 +121,7 @@ def create_app(test_config=None):
             return jsonify({
                 'success': True,
                 'created': added_question.id
-            })
+            }), 200
 
         except:
             abort(422)
@@ -143,7 +143,7 @@ def create_app(test_config=None):
                 'success': True,
                 'questions': [question.format() for question in search_results],
                 'total_questions': len(Question.query.all())
-            })
+            }), 200
 
         abort(404)
 
@@ -160,43 +160,37 @@ def create_app(test_config=None):
                 'sucess': True,
                 'questions': [question.format() for question in questions],
                 'total_questions': len(questions)
-            })
+            }), 200
         except:
             abort(404)
 
     @app.route('/quizzes', methods=['POST'])
-    def start_quiz():
+    def start_quiz_game():
+
+        # get raw data
+        data = request.get_json()
+        previous_questions = data.get('previous_questions')
+        quiz_category = data.get('quiz_category')
+
         try:
-            # get json data from front
-            body = request.get_json()
-
-            # check whether the body containts quiz_category and previous_question
-            if not ('quiz_category' in body and 'previous_questions' in body):
-                abort(422)
-
-            # fetch data from front
-            category = body.get('quiz_category')
-            previous_questions = body.get('previous_questions')
-
-            if category['type'] == 'click':
-                available_questions = Question.query.filter(
-                    Question.id.notin_((previous_questions))).all()
-            else:
-                available_questions = Question.query.filter_by(category=category['id']).filter(
-                    Question.id.notin_((previous_questions))).all()
-
-            new_question = available_questions[random.randrange(
-                0, len(available_questions))].format() if len(available_questions) > 0 else None
+            # limit question to not obtain the previous questions
+            question = Question.query.filter(
+                Question.id.notin_(previous_questions)
+            )
+            # check if category is not equal to 0
+            if int(quiz_category['id']):
+                question = question.filter_by(
+                    category=int(quiz_category['id']))
 
             return jsonify({
-                'success': True,
-                'question': new_question
-            })
-
+                "success": True,
+                "question": question.first().format(),
+            }), 200
         except:
             abort(422)
 
     # ---------- Error handling
+
     @app.errorhandler(404)
     def not_found(error):
         return jsonify({
